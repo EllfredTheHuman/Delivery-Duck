@@ -19,17 +19,48 @@
 
 <body>
 
-
     <main class="title-screen">
 
 
-        <!-- =========================================
-             GAME TITLE
-        ========================================== -->
+        <!-- SKY -->
+
+        <div class="sky">
+
+            <div class="sun"></div>
+
+            <div class="cloud cloud-one">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="cloud cloud-two">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="cloud cloud-three">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+
+            <!-- HILLS -->
+
+            <div class="hill hill-back"></div>
+
+            <div class="hill hill-front"></div>
+
+        </div>
+
+
+        <!-- TITLE -->
 
         <div class="logo">
 
-            <div class="logo-word delivery">
+            <div class="delivery-word">
 
                 <span>D</span>
                 <span>E</span>
@@ -43,31 +74,25 @@
 
                     Y
 
-                    <!-- Duck will sit here -->
-
-                    <img
-                        class="title-duck"
-                        src="../ducky_3_spritesheet.png"
-                        alt="Delivery Duck"
-                    >
+                    <canvas
+                        id="titleDuck"
+                        width="32"
+                        height="32"
+                    ></canvas>
 
                 </span>
 
             </div>
 
 
-            <div class="logo-word duck">
-
+            <div class="duck-word">
                 DUCK
-
             </div>
 
         </div>
 
 
-        <!-- =========================================
-             MENU
-        ========================================== -->
+        <!-- MENU -->
 
         <div class="menu">
 
@@ -82,20 +107,7 @@
         </div>
 
 
-        <!-- =========================================
-             VERSION
-        ========================================== -->
-
-        <div class="version">
-
-            v0.1
-
-        </div>
-
-
-        <!-- =========================================
-             CREDITS PANEL
-        ========================================== -->
+        <!-- CREDITS -->
 
         <div
             id="creditsPanel"
@@ -122,6 +134,13 @@
 
             </div>
 
+        </div>
+
+
+        <!-- VERSION -->
+
+        <div class="version">
+            v0.1
         </div>
 
 
