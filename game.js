@@ -1,8 +1,11 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Low-resolution game canvas.
-// The browser scales this up, giving everything a crisp pixel-art look.
+
+// =====================================================
+// CANVAS
+// =====================================================
+
 canvas.width = 320;
 canvas.height = 180;
 
@@ -10,68 +13,44 @@ ctx.imageSmoothingEnabled = false;
 
 
 // =====================================================
-// PIXEL DUCK
+// DUCK SPRITESHEET
 // =====================================================
 
-// Each character is a tiny pixel-art grid.
-// 0 = transparent
-// 1 = outline
-// 2 = yellow
-// 3 = orange
-// 4 = eye
-// 5 = wing
+const duckSprite = new Image();
 
-const duckFrames = [
-
-    // WALK FRAME 1
-    [
-        "0000000000000000",
-        "0000111110000000",
-        "0001222221100000",
-        "0012222222210000",
-        "0012222242233330",
-        "0012222222233300",
-        "0012225552220000",
-        "0012225552220000",
-        "0001222222210000",
-        "0000122222100000",
-        "0000111111100000",
-        "0001100011000000",
-        "0011000011000000",
-        "0011000011000000",
-        "0000000000000000",
-        "0000000000000000"
-    ],
-
-    // WALK FRAME 2
-    [
-        "0000000000000000",
-        "0000111110000000",
-        "0001222221100000",
-        "0012222222210000",
-        "0012222242233330",
-        "0012222222233300",
-        "0012225552220000",
-        "0012225552220000",
-        "0001222222210000",
-        "0000122222100000",
-        "0000111111100000",
-        "0001100011000000",
-        "0001100001100000",
-        "0011000000110000",
-        "0000000000000000",
-        "0000000000000000"
-    ]
-];
+duckSprite.src = "ducky_3_spritesheet.png";
 
 
-// Colours used by the pixel duck.
-const duckColours = {
-    1: "#3b342c",
-    2: "#f4d34f",
-    3: "#e98b35",
-    4: "#171717",
-    5: "#d9b63e"
+const DUCK_FRAME_WIDTH = 32;
+const DUCK_FRAME_HEIGHT = 32;
+
+
+// =====================================================
+// DUCK ANIMATIONS
+// =====================================================
+
+const duckAnimations = {
+
+    idle: {
+        row: 0,
+        frames: 2
+    },
+
+    walk: {
+        row: 1,
+        frames: 6
+    },
+
+    bouncyIdle: {
+        row: 2,
+        frames: 4
+    },
+
+    bouncyWalk: {
+        row: 3,
+        frames: 6
+    }
+
 };
 
 
@@ -81,26 +60,29 @@ const duckColours = {
 
 const player = {
 
-    x: 160,
-    y: 90,
+    x: 144,
+    y: 76,
 
-    width: 16,
-    height: 16,
+    width: 32,
+    height: 32,
 
     speed: 1.5,
 
     direction: "down",
 
+    animation: "idle",
+
     animationFrame: 0,
+
     animationTimer: 0,
 
-    // Smaller than the sprite.
-    // This makes collision feel natural.
     hitbox: {
-        x: 4,
-        y: 8,
-        width: 8,
-        height: 6
+
+        x: 9,
+        y: 15,
+
+        width: 14,
+        height: 12
     }
 };
 
@@ -110,8 +92,10 @@ const player = {
 // =====================================================
 
 const camera = {
+
     x: 0,
     y: 0
+
 };
 
 
@@ -120,8 +104,10 @@ const camera = {
 // =====================================================
 
 const world = {
+
     width: 1200,
     height: 900
+
 };
 
 
@@ -131,61 +117,96 @@ const world = {
 
 const walls = [
 
-    // Large building
+    // ---------------------------------------------
+    // BUILDING 1
+    // ---------------------------------------------
+
     {
         x: 80,
         y: 60,
+
         width: 180,
         height: 100
     },
 
-    // Building
+
+    // ---------------------------------------------
+    // BUILDING 2
+    // ---------------------------------------------
+
     {
         x: 430,
         y: 40,
+
         width: 150,
         height: 130
     },
 
-    // Building
+
+    // ---------------------------------------------
+    // BUILDING 3
+    // ---------------------------------------------
+
     {
         x: 720,
         y: 90,
+
         width: 200,
         height: 110
     },
 
-    // Building
+
+    // ---------------------------------------------
+    // BUILDING 4
+    // ---------------------------------------------
+
     {
         x: 280,
         y: 430,
+
         width: 190,
         height: 120
     },
 
-    // Building
+
+    // ---------------------------------------------
+    // BUILDING 5
+    // ---------------------------------------------
+
     {
         x: 700,
         y: 500,
+
         width: 220,
         height: 150
     },
 
-    // Tree
+
+    // ---------------------------------------------
+    // TREE 1
+    // ---------------------------------------------
+
     {
         x: 1050,
         y: 300,
+
         width: 25,
         height: 25
     },
 
-    // Tree
+
+    // ---------------------------------------------
+    // TREE 2
+    // ---------------------------------------------
+
     {
         x: 1100,
         y: 700,
+
         width: 25,
         height: 25
     }
+
 ];
 
 
@@ -195,11 +216,13 @@ const walls = [
 
 const keys = {};
 
+
 window.addEventListener("keydown", (event) => {
 
     keys[event.key.toLowerCase()] = true;
 
 });
+
 
 window.addEventListener("keyup", (event) => {
 
@@ -216,155 +239,285 @@ function getPlayerHitbox() {
 
     return {
 
-        x: player.x + player.hitbox.x,
+        x:
+            player.x +
+            player.hitbox.x,
 
-        y: player.y + player.hitbox.y,
+        y:
+            player.y +
+            player.hitbox.y,
 
-        width: player.hitbox.width,
+        width:
+            player.hitbox.width,
 
-        height: player.hitbox.height
+        height:
+            player.hitbox.height
+
     };
+
 }
 
 
 // =====================================================
-// COLLISION
+// COLLISION CHECK
 // =====================================================
 
 function isColliding(a, b) {
 
     return (
 
-        a.x < b.x + b.width &&
+        a.x <
+        b.x + b.width
 
-        a.x + a.width > b.x &&
+        &&
 
-        a.y < b.y + b.height &&
+        a.x + a.width >
+        b.x
 
-        a.y + a.height > b.y
+        &&
+
+        a.y <
+        b.y + b.height
+
+        &&
+
+        a.y + a.height >
+        b.y
+
     );
+
 }
 
 
 // =====================================================
-// MOVEMENT
+// MOVE PLAYER
 // =====================================================
 
 function movePlayer(dx, dy) {
 
     // ---------------------------------------------
-    // Horizontal movement
+    // HORIZONTAL
     // ---------------------------------------------
 
     player.x += dx;
 
-    let hitbox = getPlayerHitbox();
+    let hitbox =
+        getPlayerHitbox();
+
 
     for (const wall of walls) {
 
-        if (isColliding(hitbox, wall)) {
+        if (
+            isColliding(
+                hitbox,
+                wall
+            )
+        ) {
 
             if (dx > 0) {
 
                 player.x =
-                    wall.x -
-                    player.hitbox.x -
+                    wall.x
+                    -
+                    player.hitbox.x
+                    -
                     player.hitbox.width;
+
             }
+
 
             if (dx < 0) {
 
                 player.x =
-                    wall.x +
-                    wall.width -
+                    wall.x
+                    +
+                    wall.width
+                    -
                     player.hitbox.x;
+
             }
 
-            hitbox = getPlayerHitbox();
+
+            hitbox =
+                getPlayerHitbox();
+
         }
+
     }
 
 
     // ---------------------------------------------
-    // Vertical movement
+    // VERTICAL
     // ---------------------------------------------
 
     player.y += dy;
 
-    hitbox = getPlayerHitbox();
+    hitbox =
+        getPlayerHitbox();
+
 
     for (const wall of walls) {
 
-        if (isColliding(hitbox, wall)) {
+        if (
+            isColliding(
+                hitbox,
+                wall
+            )
+        ) {
 
             if (dy > 0) {
 
                 player.y =
-                    wall.y -
-                    player.hitbox.y -
+                    wall.y
+                    -
+                    player.hitbox.y
+                    -
                     player.hitbox.height;
+
             }
+
 
             if (dy < 0) {
 
                 player.y =
-                    wall.y +
-                    wall.height -
+                    wall.y
+                    +
+                    wall.height
+                    -
                     player.hitbox.y;
+
             }
 
-            hitbox = getPlayerHitbox();
+
+            hitbox =
+                getPlayerHitbox();
+
         }
+
     }
 
 
-    // Keep duck inside world
+    // ---------------------------------------------
+    // WORLD BOUNDS
+    // ---------------------------------------------
 
     player.x = Math.max(
+
         0,
-        Math.min(world.width - player.width, player.x)
+
+        Math.min(
+
+            world.width -
+            player.width,
+
+            player.x
+
+        )
+
     );
 
+
     player.y = Math.max(
+
         0,
-        Math.min(world.height - player.height, player.y)
+
+        Math.min(
+
+            world.height -
+            player.height,
+
+            player.y
+
+        )
+
     );
+
 }
 
 
 // =====================================================
-// UPDATE DUCK ANIMATION
+// UPDATE ANIMATION
 // =====================================================
 
 function updateAnimation(dx, dy) {
 
-    if (dx === 0 && dy === 0) {
+    const moving =
+        dx !== 0 ||
+        dy !== 0;
+
+
+    const newAnimation =
+        moving
+            ? "walk"
+            : "idle";
+
+
+    // Animation changed
+
+    if (
+        player.animation !==
+        newAnimation
+    ) {
+
+        player.animation =
+            newAnimation;
+
+        player.animationFrame =
+            0;
+
+        player.animationTimer =
+            0;
+
+    }
+
+
+    // Don't animate while standing
+
+    if (!moving) {
 
         player.animationFrame = 0;
 
+        player.animationTimer = 0;
+
         return;
+
     }
 
 
     player.animationTimer++;
 
 
-    if (player.animationTimer >= 12) {
+    if (
+        player.animationTimer >= 8
+    ) {
 
         player.animationTimer = 0;
 
         player.animationFrame++;
 
-        if (player.animationFrame >= duckFrames.length) {
+
+        const animation =
+            duckAnimations[
+                player.animation
+            ];
+
+
+        if (
+            player.animationFrame >=
+            animation.frames
+        ) {
 
             player.animationFrame = 0;
+
         }
+
     }
+
 }
 
 
 // =====================================================
-// UPDATE
+// UPDATE GAME
 // =====================================================
 
 function update() {
@@ -373,111 +526,246 @@ function update() {
     let dy = 0;
 
 
-    if (keys["w"] || keys["arrowup"]) {
+    // ---------------------------------------------
+    // INPUT
+    // ---------------------------------------------
+
+    if (
+        keys["w"] ||
+        keys["arrowup"]
+    ) {
+
         dy -= player.speed;
+
         player.direction = "up";
+
     }
 
-    if (keys["s"] || keys["arrowdown"]) {
+
+    if (
+        keys["s"] ||
+        keys["arrowdown"]
+    ) {
+
         dy += player.speed;
+
         player.direction = "down";
+
     }
 
-    if (keys["a"] || keys["arrowleft"]) {
+
+    if (
+        keys["a"] ||
+        keys["arrowleft"]
+    ) {
+
         dx -= player.speed;
+
         player.direction = "left";
+
     }
 
-    if (keys["d"] || keys["arrowright"]) {
+
+    if (
+        keys["d"] ||
+        keys["arrowright"]
+    ) {
+
         dx += player.speed;
+
         player.direction = "right";
+
     }
 
 
-    // Prevent diagonal movement being faster.
+    // ---------------------------------------------
+    // NORMALISE DIAGONAL MOVEMENT
+    // ---------------------------------------------
 
-    if (dx !== 0 && dy !== 0) {
+    if (
+        dx !== 0 &&
+        dy !== 0
+    ) {
 
         dx *= 0.7071;
         dy *= 0.7071;
+
     }
 
 
-    movePlayer(dx, dy);
+    // ---------------------------------------------
+    // MOVE
+    // ---------------------------------------------
 
-    updateAnimation(dx, dy);
+    movePlayer(
+        dx,
+        dy
+    );
 
 
-    // Camera follows duck.
+    // ---------------------------------------------
+    // ANIMATION
+    // ---------------------------------------------
+
+    updateAnimation(
+        dx,
+        dy
+    );
+
+
+    // ---------------------------------------------
+    // CAMERA
+    // ---------------------------------------------
 
     camera.x =
-        player.x +
-        player.width / 2 -
+
+        player.x
+        +
+        player.width / 2
+        -
         canvas.width / 2;
 
+
     camera.y =
-        player.y +
-        player.height / 2 -
+
+        player.y
+        +
+        player.height / 2
+        -
         canvas.height / 2;
 
 
-    // Keep camera inside world.
+    // ---------------------------------------------
+    // CAMERA BOUNDS
+    // ---------------------------------------------
 
     camera.x = Math.max(
+
         0,
+
         Math.min(
-            world.width - canvas.width,
+
+            world.width -
+            canvas.width,
+
             camera.x
+
         )
+
     );
 
+
     camera.y = Math.max(
+
         0,
+
         Math.min(
-            world.height - canvas.height,
+
+            world.height -
+            canvas.height,
+
             camera.y
+
         )
+
     );
+
 }
 
 
 // =====================================================
-// DRAW PIXEL DUCK
+// DRAW DUCK
 // =====================================================
 
 function drawDuck() {
 
-    const frame = duckFrames[player.animationFrame];
-
-    const pixelSize = 1;
-
-
-    for (let y = 0; y < frame.length; y++) {
-
-        for (let x = 0; x < frame[y].length; x++) {
-
-            const pixel = Number(frame[y][x]);
-
-            if (pixel === 0) continue;
+    const animation =
+        duckAnimations[
+            player.animation
+        ];
 
 
-            ctx.fillStyle = duckColours[pixel];
+    ctx.drawImage(
 
-            ctx.fillRect(
+        duckSprite,
 
-                Math.floor(
-                    player.x + x * pixelSize
-                ),
+        // SOURCE X
+        player.animationFrame *
+        DUCK_FRAME_WIDTH,
 
-                Math.floor(
-                    player.y + y * pixelSize
-                ),
+        // SOURCE Y
+        animation.row *
+        DUCK_FRAME_HEIGHT,
 
-                pixelSize,
-                pixelSize
-            );
-        }
-    }
+        // SOURCE WIDTH
+        DUCK_FRAME_WIDTH,
+
+        // SOURCE HEIGHT
+        DUCK_FRAME_HEIGHT,
+
+        // DESTINATION X
+        Math.floor(player.x),
+
+        // DESTINATION Y
+        Math.floor(player.y),
+
+        // DESTINATION WIDTH
+        DUCK_FRAME_WIDTH,
+
+        // DESTINATION HEIGHT
+        DUCK_FRAME_HEIGHT
+
+    );
+
+}
+
+
+// =====================================================
+// DRAW TREE
+// =====================================================
+
+function drawTree(x, y) {
+
+    // Trunk
+
+    ctx.fillStyle = "#69472f";
+
+    ctx.fillRect(
+
+        x + 9,
+        y + 13,
+
+        7,
+        14
+
+    );
+
+
+    // Leaves
+
+    ctx.fillStyle = "#356b3d";
+
+    ctx.fillRect(
+
+        x + 3,
+        y + 5,
+
+        19,
+        15
+
+    );
+
+
+    ctx.fillRect(
+
+        x + 7,
+        y,
+
+        11,
+        22
+
+    );
+
 }
 
 
@@ -488,18 +776,27 @@ function drawDuck() {
 function draw() {
 
     ctx.clearRect(
+
         0,
         0,
+
         canvas.width,
         canvas.height
+
     );
 
 
     ctx.save();
 
+
+    // Camera
+
     ctx.translate(
+
         -Math.floor(camera.x),
+
         -Math.floor(camera.y)
+
     );
 
 
@@ -507,39 +804,52 @@ function draw() {
     // GRASS
     // ---------------------------------------------
 
-    ctx.fillStyle = "#72a653";
+    ctx.fillStyle =
+        "#72a653";
+
 
     ctx.fillRect(
+
         0,
         0,
+
         world.width,
         world.height
+
     );
 
 
     // ---------------------------------------------
-    // ROADS
+    // HORIZONTAL ROAD
     // ---------------------------------------------
 
-    ctx.fillStyle = "#4e4b4a";
+    ctx.fillStyle =
+        "#4e4b4a";
 
-    // Horizontal road
 
     ctx.fillRect(
+
         0,
         250,
+
         world.width,
         80
+
     );
 
 
-    // Vertical road
+    // ---------------------------------------------
+    // VERTICAL ROAD
+    // ---------------------------------------------
 
     ctx.fillRect(
+
         600,
         0,
+
         80,
         world.height
+
     );
 
 
@@ -547,28 +857,45 @@ function draw() {
     // ROAD MARKINGS
     // ---------------------------------------------
 
-    ctx.fillStyle = "#d9c85c";
+    ctx.fillStyle =
+        "#d9c85c";
 
 
-    for (let x = 0; x < world.width; x += 40) {
+    for (
+        let x = 0;
+        x < world.width;
+        x += 40
+    ) {
 
         ctx.fillRect(
+
             x,
             288,
+
             20,
             3
+
         );
+
     }
 
 
-    for (let y = 0; y < world.height; y += 40) {
+    for (
+        let y = 0;
+        y < world.height;
+        y += 40
+    ) {
 
         ctx.fillRect(
+
             638,
             y,
+
             3,
             20
+
         );
+
     }
 
 
@@ -576,69 +903,111 @@ function draw() {
     // BUILDINGS
     // ---------------------------------------------
 
-    for (const wall of walls) {
+    for (
+        const wall of walls
+    ) {
 
-        // Trees get different drawing.
+        // Trees
 
         if (
             wall.width === 25 &&
             wall.height === 25
         ) {
 
-            drawTree(wall.x, wall.y);
+            drawTree(
+
+                wall.x,
+                wall.y
+
+            );
 
             continue;
+
         }
 
 
         // Building shadow
 
-        ctx.fillStyle = "#493c38";
+        ctx.fillStyle =
+            "#493c38";
+
 
         ctx.fillRect(
+
             wall.x + 4,
             wall.y + 4,
+
             wall.width,
             wall.height
+
         );
 
 
         // Building
 
-        ctx.fillStyle = "#b87559";
+        ctx.fillStyle =
+            "#b87559";
+
 
         ctx.fillRect(
+
             wall.x,
             wall.y,
+
             wall.width,
             wall.height
+
         );
 
 
         // Windows
 
-        ctx.fillStyle = "#79a9b7";
+        ctx.fillStyle =
+            "#79a9b7";
+
 
         for (
-            let wx = wall.x + 15;
-            wx < wall.x + wall.width - 15;
+
+            let wx =
+                wall.x + 15;
+
+            wx <
+                wall.x +
+                wall.width -
+                15;
+
             wx += 35
+
         ) {
 
             for (
-                let wy = wall.y + 15;
-                wy < wall.y + wall.height - 15;
+
+                let wy =
+                    wall.y + 15;
+
+                wy <
+                    wall.y +
+                    wall.height -
+                    15;
+
                 wy += 30
+
             ) {
 
                 ctx.fillRect(
+
                     wx,
                     wy,
+
                     12,
                     10
+
                 );
+
             }
+
         }
+
     }
 
 
@@ -646,48 +1015,17 @@ function draw() {
     // DUCK
     // ---------------------------------------------
 
-    drawDuck();
+    if (
+        duckSprite.complete
+    ) {
+
+        drawDuck();
+
+    }
 
 
     ctx.restore();
-}
 
-
-// =====================================================
-// TREE
-// =====================================================
-
-function drawTree(x, y) {
-
-    // Trunk
-
-    ctx.fillStyle = "#69472f";
-
-    ctx.fillRect(
-        x + 9,
-        y + 13,
-        7,
-        14
-    );
-
-
-    // Leaves
-
-    ctx.fillStyle = "#356b3d";
-
-    ctx.fillRect(
-        x + 3,
-        y + 5,
-        19,
-        15
-    );
-
-    ctx.fillRect(
-        x + 7,
-        y,
-        11,
-        22
-    );
 }
 
 
@@ -701,7 +1039,10 @@ function gameLoop() {
 
     draw();
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(
+        gameLoop
+    );
+
 }
 
 
