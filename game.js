@@ -1,89 +1,90 @@
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+// =====================================================
+// DELIVERY DUCK
+// CITY GAMEPLAY
+// =====================================================
 
 
 // =====================================================
 // CANVAS
 // =====================================================
 
-canvas.width = 320;
-canvas.height = 180;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
 ctx.imageSmoothingEnabled = false;
 
 
 // =====================================================
-// DUCK SPRITESHEET
+// CANVAS SIZE
+// =====================================================
+
+function resizeCanvas() {
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+}
+
+resizeCanvas();
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+// =====================================================
+// SPRITESHEET
 // =====================================================
 
 const duckSprite = new Image();
 
-duckSprite.src = "ducky_3_spritesheet.png";
-
-const DUCK_FRAME_WIDTH = 32;
-const DUCK_FRAME_HEIGHT = 32;
+duckSprite.src =
+    "ducky_3_spritesheet.png";
 
 
 // =====================================================
-// DUCK ANIMATIONS
+// SPRITE SETTINGS
 // =====================================================
 
-const duckAnimations = {
+const FRAME_WIDTH = 32;
+const FRAME_HEIGHT = 32;
 
-    idle: {
-        row: 0,
-        frames: 2
-    },
+const IDLE_ROW = 0;
+const WALK_ROW = 1;
 
-    walk: {
-        row: 1,
-        frames: 6
-    },
-
-    bouncyIdle: {
-        row: 2,
-        frames: 4
-    },
-
-    bouncyWalk: {
-        row: 3,
-        frames: 6
-    }
-
-};
+const IDLE_FRAMES = 2;
+const WALK_FRAMES = 6;
 
 
 // =====================================================
-// PLAYER
+// WORLD
 // =====================================================
 
-const player = {
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 2400;
 
-    x: 144,
-    y: 76,
 
-    width: 32,
-    height: 32,
+// =====================================================
+// DUCK
+// =====================================================
 
-    speed: 1.5,
+const duck = {
+
+    x: 400,
+    y: 400,
+
+    width: 24,
+    height: 24,
+
+    speed: 3,
 
     direction: "down",
 
-    animation: "idle",
-
-    animationFrame: 0,
-
+    frame: 0,
     animationTimer: 0,
 
-    hitbox: {
-
-        x: 9,
-        y: 15,
-
-        width: 14,
-        height: 12
-
-    }
+    moving: false
 
 };
 
@@ -101,145 +102,451 @@ const camera = {
 
 
 // =====================================================
-// WORLD
+// INPUT
 // =====================================================
 
-const world = {
+const keys = {};
 
-    width: 1200,
-    height: 900
+window.addEventListener(
+    "keydown",
+    event => {
 
-};
+        keys[event.key.toLowerCase()] = true;
+
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    event => {
+
+        keys[event.key.toLowerCase()] = false;
+
+    }
+);
 
 
 // =====================================================
-// COLLISION OBJECTS
+// CITY BUILDINGS
 // =====================================================
 
-const walls = [
+const buildings = [
 
-    // Building
+    // North-west block
 
     {
-        x: 80,
-        y: 60,
+        x: 120,
+        y: 120,
+        width: 330,
+        height: 230,
+        type: "building",
+        colour: "#d96f63"
+    },
 
-        width: 180,
-        height: 100
+    {
+        x: 600,
+        y: 120,
+        width: 260,
+        height: 230,
+        type: "building",
+        colour: "#6d8fba"
     },
 
 
-    // Building
+    // North-middle
 
     {
-        x: 430,
-        y: 40,
+        x: 1040,
+        y: 120,
+        width: 300,
+        height: 230,
+        type: "cafe",
+        colour: "#d89b62",
 
-        width: 150,
-        height: 130
+        name: "Sunny Bean Café",
+
+        dialogue: [
+            "Welcome to the Sunny Bean!",
+            "The coffee here is almost as good as your feathers.",
+            "You delivering something today?",
+            "I swear the muffins disappear by themselves."
+        ]
+
     },
 
 
-    // Building
+    // North-east
 
     {
-        x: 720,
-        y: 90,
-
-        width: 200,
-        height: 110
+        x: 1500,
+        y: 120,
+        width: 350,
+        height: 230,
+        type: "building",
+        colour: "#9b78b8"
     },
 
 
-    // Building
-
     {
-        x: 280,
-        y: 430,
+        x: 2050,
+        y: 120,
+        width: 300,
+        height: 230,
+        type: "shop",
+        colour: "#c96d91",
 
-        width: 190,
-        height: 120
+        name: "Quack & Co.",
+
+        dialogue: [
+            "Quack & Co. — finest goods in town!",
+            "We've got absolutely everything.",
+            "...probably.",
+            "Nice parcel."
+        ]
+
     },
 
 
-    // Building
+    // Middle-left
 
     {
-        x: 700,
-        y: 500,
+        x: 120,
+        y: 650,
+        width: 330,
+        height: 280,
+        type: "shop",
+        colour: "#75a86c",
 
-        width: 220,
-        height: 150
+        name: "Green Grocer",
+
+        dialogue: [
+            "Fresh fruit!",
+            "The apples arrived this morning.",
+            "Need anything for the road?",
+            "A duck buying groceries would be pretty funny."
+        ]
+
     },
 
 
-    // Tree
-
     {
-        x: 1050,
-        y: 300,
-
-        width: 25,
-        height: 25
+        x: 600,
+        y: 650,
+        width: 260,
+        height: 280,
+        type: "building",
+        colour: "#c47d59"
     },
 
 
-    // Tree
+    // Middle
 
     {
-        x: 1100,
-        y: 700,
+        x: 1040,
+        y: 650,
+        width: 300,
+        height: 280,
+        type: "building",
+        colour: "#8c9d6c"
+    },
 
-        width: 25,
-        height: 25
+
+    {
+        x: 1500,
+        y: 650,
+        width: 350,
+        height: 280,
+        type: "cafe",
+        colour: "#b8799e",
+
+        name: "The Purple Mug",
+
+        dialogue: [
+            "Oh! A duck!",
+            "You're a delivery duck, aren't you?",
+            "We get deliveries here all the time.",
+            "Come back later!"
+        ]
+
+    },
+
+
+    {
+        x: 2050,
+        y: 650,
+        width: 300,
+        height: 280,
+        type: "building",
+        colour: "#6688a3"
+    },
+
+
+    // South-west
+
+    {
+        x: 120,
+        y: 1200,
+        width: 330,
+        height: 300,
+        type: "building",
+        colour: "#bd805d"
+    },
+
+
+    {
+        x: 600,
+        y: 1200,
+        width: 260,
+        height: 300,
+        type: "shop",
+        colour: "#806fa8",
+
+        name: "Duck's General Store",
+
+        dialogue: [
+            "Everything must go!",
+            "Well... not literally everything.",
+            "You look like you need a hat.",
+            "We don't sell delivery uniforms."
+        ]
+
+    },
+
+
+    {
+        x: 1040,
+        y: 1200,
+        width: 300,
+        height: 300,
+        type: "building",
+        colour: "#d16e67"
+    },
+
+
+    {
+        x: 1500,
+        y: 1200,
+        width: 350,
+        height: 300,
+        type: "building",
+        colour: "#6e9d9c"
+    },
+
+
+    {
+        x: 2050,
+        y: 1200,
+        width: 300,
+        height: 300,
+        type: "cafe",
+        colour: "#c18b62",
+
+        name: "Little Bean",
+
+        dialogue: [
+            "One small coffee, coming right up!",
+            "Actually, you're a duck.",
+            "Would you like a tiny coffee?",
+            "We don't serve pond water."
+        ]
+
     }
 
 ];
 
 
 // =====================================================
-// INPUT
+// DELIVERY LOCATIONS
 // =====================================================
 
-const keys = {};
+const deliveries = [
 
-window.addEventListener("keydown", (event) => {
+    {
+        x: 480,
+        y: 480,
+        name: "Miller House"
+    },
 
-    keys[event.key.toLowerCase()] = true;
+    {
+        x: 900,
+        y: 470,
+        name: "Rose House"
+    },
 
-});
+    {
+        x: 1400,
+        y: 470,
+        name: "Oak House"
+    },
+
+    {
+        x: 1930,
+        y: 470,
+        name: "Willow House"
+    },
+
+    {
+        x: 470,
+        y: 1020,
+        name: "Pine House"
+    },
+
+    {
+        x: 900,
+        y: 1020,
+        name: "Maple House"
+    },
+
+    {
+        x: 1400,
+        y: 1020,
+        name: "River House"
+    },
+
+    {
+        x: 1930,
+        y: 1020,
+        name: "Sunny House"
+    },
+
+    {
+        x: 470,
+        y: 1600,
+        name: "Hill House"
+    },
+
+    {
+        x: 900,
+        y: 1600,
+        name: "Lake House"
+    }
+
+];
 
 
-window.addEventListener("keyup", (event) => {
+let currentDelivery = 0;
 
-    keys[event.key.toLowerCase()] = false;
-
-});
+let coins = 0;
 
 
 // =====================================================
-// PLAYER HITBOX
+// TREES
 // =====================================================
 
-function getPlayerHitbox() {
+const trees = [
 
-    return {
+    { x: 520, y: 190 },
+    { x: 930, y: 200 },
+    { x: 1410, y: 190 },
+    { x: 1920, y: 210 },
 
-        x:
-            player.x +
-            player.hitbox.x,
+    { x: 520, y: 730 },
+    { x: 930, y: 760 },
+    { x: 1410, y: 730 },
+    { x: 1920, y: 760 },
 
-        y:
-            player.y +
-            player.hitbox.y,
+    { x: 520, y: 1280 },
+    { x: 930, y: 1300 },
+    { x: 1410, y: 1290 },
+    { x: 1920, y: 1310 }
 
-        width:
-            player.hitbox.width,
+];
 
-        height:
-            player.hitbox.height
 
-    };
+// =====================================================
+// STREET LAMPS
+// =====================================================
+
+const lamps = [
+
+    { x: 520, y: 390 },
+    { x: 970, y: 390 },
+    { x: 1450, y: 390 },
+    { x: 1980, y: 390 },
+
+    { x: 520, y: 940 },
+    { x: 970, y: 940 },
+    { x: 1450, y: 940 },
+    { x: 1980, y: 940 },
+
+    { x: 520, y: 1530 },
+    { x: 970, y: 1530 },
+    { x: 1450, y: 1530 },
+    { x: 1980, y: 1530 }
+
+];
+
+
+// =====================================================
+// CARS
+// =====================================================
+
+const cars = [
+
+    {
+        x: 540,
+        y: 500,
+        width: 48,
+        height: 24,
+        colour: "#d94d4d"
+    },
+
+    {
+        x: 960,
+        y: 500,
+        width: 48,
+        height: 24,
+        colour: "#4d79d9"
+    },
+
+    {
+        x: 1450,
+        y: 500,
+        width: 48,
+        height: 24,
+        colour: "#d9b84d"
+    },
+
+    {
+        x: 1980,
+        y: 500,
+        width: 48,
+        height: 24,
+        colour: "#70a86d"
+    }
+
+];
+
+
+// =====================================================
+// DIALOGUE
+// =====================================================
+
+let dialogueOpen = false;
+
+let dialogueText = "";
+
+let dialogueName = "";
+
+
+// =====================================================
+// DISTANCE
+// =====================================================
+
+function distance(
+    x1,
+    y1,
+    x2,
+    y2
+) {
+
+    return Math.sqrt(
+
+        (x2 - x1) ** 2 +
+        (y2 - y1) ** 2
+
+    );
 
 }
 
@@ -248,27 +555,17 @@ function getPlayerHitbox() {
 // COLLISION
 // =====================================================
 
-function isColliding(a, b) {
+function rectanglesCollide(
+    a,
+    b
+) {
 
     return (
 
-        a.x <
-        b.x + b.width
-
-        &&
-
-        a.x + a.width >
-        b.x
-
-        &&
-
-        a.y <
-        b.y + b.height
-
-        &&
-
-        a.y + a.height >
-        b.y
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
 
     );
 
@@ -276,142 +573,262 @@ function isColliding(a, b) {
 
 
 // =====================================================
-// PLAYER MOVEMENT
+// COLLISION OBJECTS
 // =====================================================
 
-function movePlayer(dx, dy) {
+function getCollisionObjects() {
 
-    // ---------------------------------------------
-    // Horizontal movement
-    // ---------------------------------------------
-
-    player.x += dx;
-
-    let hitbox =
-        getPlayerHitbox();
+    const objects = [];
 
 
-    for (const wall of walls) {
+    // Buildings
 
-        if (
-            isColliding(
-                hitbox,
-                wall
-            )
-        ) {
+    buildings.forEach(
+        building => {
 
-            if (dx > 0) {
+            objects.push({
 
-                player.x =
-                    wall.x
-                    -
-                    player.hitbox.x
-                    -
-                    player.hitbox.width;
+                x: building.x,
+                y: building.y,
+                width: building.width,
+                height: building.height
 
-            }
-
-            else if (dx < 0) {
-
-                player.x =
-                    wall.x
-                    +
-                    wall.width
-                    -
-                    player.hitbox.x;
-
-            }
-
-            hitbox =
-                getPlayerHitbox();
+            });
 
         }
-
-    }
-
-
-    // ---------------------------------------------
-    // Vertical movement
-    // ---------------------------------------------
-
-    player.y += dy;
-
-    hitbox =
-        getPlayerHitbox();
-
-
-    for (const wall of walls) {
-
-        if (
-            isColliding(
-                hitbox,
-                wall
-            )
-        ) {
-
-            if (dy > 0) {
-
-                player.y =
-                    wall.y
-                    -
-                    player.hitbox.y
-                    -
-                    player.hitbox.height;
-
-            }
-
-            else if (dy < 0) {
-
-                player.y =
-                    wall.y
-                    +
-                    wall.height
-                    -
-                    player.hitbox.y;
-
-            }
-
-            hitbox =
-                getPlayerHitbox();
-
-        }
-
-    }
-
-
-    // ---------------------------------------------
-    // World boundaries
-    // ---------------------------------------------
-
-    player.x = Math.max(
-
-        0,
-
-        Math.min(
-
-            world.width -
-            player.width,
-
-            player.x
-
-        )
-
     );
 
 
-    player.y = Math.max(
+    // Trees
 
+    trees.forEach(
+        tree => {
+
+            objects.push({
+
+                x: tree.x - 15,
+                y: tree.y - 15,
+                width: 30,
+                height: 30
+
+            });
+
+        }
+    );
+
+
+    // Cars
+
+    cars.forEach(
+        car => {
+
+            objects.push({
+
+                x: car.x,
+                y: car.y,
+                width: car.width,
+                height: car.height
+
+            });
+
+        }
+    );
+
+
+    return objects;
+
+}
+
+
+// =====================================================
+// MOVE DUCK
+// =====================================================
+
+function moveDuck() {
+
+    if (dialogueOpen) {
+        duck.moving = false;
+        return;
+    }
+
+
+    let dx = 0;
+    let dy = 0;
+
+
+    if (
+        keys["arrowup"] ||
+        keys["w"]
+    ) {
+
+        dy -= 1;
+
+        duck.direction = "up";
+
+    }
+
+
+    if (
+        keys["arrowdown"] ||
+        keys["s"]
+    ) {
+
+        dy += 1;
+
+        duck.direction = "down";
+
+    }
+
+
+    if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+
+        dx -= 1;
+
+        duck.direction = "left";
+
+    }
+
+
+    if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+
+        dx += 1;
+
+        duck.direction = "right";
+
+    }
+
+
+    duck.moving =
+        dx !== 0 ||
+        dy !== 0;
+
+
+    if (
+        dx !== 0 &&
+        dy !== 0
+    ) {
+
+        dx *= 0.707;
+        dy *= 0.707;
+
+    }
+
+
+    const nextX =
+        duck.x +
+        dx *
+        duck.speed;
+
+
+    const nextY =
+        duck.y +
+        dy *
+        duck.speed;
+
+
+    const collisionObjects =
+        getCollisionObjects();
+
+
+    const nextHorizontal = {
+
+        x: nextX,
+        y: duck.y,
+
+        width: duck.width,
+        height: duck.height
+
+    };
+
+
+    let horizontalBlocked = false;
+
+
+    collisionObjects.forEach(
+        object => {
+
+            if (
+                rectanglesCollide(
+                    nextHorizontal,
+                    object
+                )
+            ) {
+
+                horizontalBlocked = true;
+
+            }
+
+        }
+    );
+
+
+    if (!horizontalBlocked) {
+
+        duck.x = nextX;
+
+    }
+
+
+    const nextVertical = {
+
+        x: duck.x,
+        y: nextY,
+
+        width: duck.width,
+        height: duck.height
+
+    };
+
+
+    let verticalBlocked = false;
+
+
+    collisionObjects.forEach(
+        object => {
+
+            if (
+                rectanglesCollide(
+                    nextVertical,
+                    object
+                )
+            ) {
+
+                verticalBlocked = true;
+
+            }
+
+        }
+    );
+
+
+    if (!verticalBlocked) {
+
+        duck.y = nextY;
+
+    }
+
+
+    duck.x = Math.max(
         0,
-
         Math.min(
-
-            world.height -
-            player.height,
-
-            player.y
-
+            WORLD_WIDTH - duck.width,
+            duck.x
         )
+    );
 
+
+    duck.y = Math.max(
+        0,
+        Math.min(
+            WORLD_HEIGHT - duck.height,
+            duck.y
+        )
     );
 
 }
@@ -421,64 +838,53 @@ function movePlayer(dx, dy) {
 // ANIMATION
 // =====================================================
 
-function updateAnimation(dx, dy) {
+function updateAnimation() {
 
-    const moving =
-        dx !== 0 ||
-        dy !== 0;
+    if (!duck.moving) {
 
+        duck.animationTimer++;
 
-    const newAnimation =
-        moving
-            ? "walk"
-            : "idle";
+        if (
+            duck.animationTimer >= 20
+        ) {
 
+            duck.animationTimer = 0;
 
-    // Animation changed
+            duck.frame++;
 
-    if (
-        player.animation !==
-        newAnimation
-    ) {
+            if (
+                duck.frame >=
+                IDLE_FRAMES
+            ) {
 
-        player.animation =
-            newAnimation;
+                duck.frame = 0;
 
-        player.animationFrame =
-            0;
+            }
 
-        player.animationTimer =
-            0;
+        }
+
+        return;
 
     }
 
 
-    // Animate idle AND walking
-
-    player.animationTimer++;
+    duck.animationTimer++;
 
 
     if (
-        player.animationTimer >= 12
+        duck.animationTimer >= 7
     ) {
 
-        player.animationTimer = 0;
+        duck.animationTimer = 0;
 
-        player.animationFrame++;
-
-
-        const animation =
-            duckAnimations[
-                player.animation
-            ];
-
+        duck.frame++;
 
         if (
-            player.animationFrame >=
-            animation.frames
+            duck.frame >=
+            WALK_FRAMES
         ) {
 
-            player.animationFrame = 0;
+            duck.frame = 0;
 
         }
 
@@ -488,159 +894,585 @@ function updateAnimation(dx, dy) {
 
 
 // =====================================================
-// UPDATE
+// CAMERA
 // =====================================================
 
-function update() {
-
-    let dx = 0;
-    let dy = 0;
-
-
-    // ---------------------------------------------
-    // WASD
-    // ---------------------------------------------
-
-    if (
-        keys["w"] ||
-        keys["arrowup"]
-    ) {
-
-        dy -= player.speed;
-
-        player.direction = "up";
-
-    }
-
-
-    if (
-        keys["s"] ||
-        keys["arrowdown"]
-    ) {
-
-        dy += player.speed;
-
-        player.direction = "down";
-
-    }
-
-
-    if (
-        keys["a"] ||
-        keys["arrowleft"]
-    ) {
-
-        dx -= player.speed;
-
-        player.direction = "left";
-
-    }
-
-
-    if (
-        keys["d"] ||
-        keys["arrowright"]
-    ) {
-
-        dx += player.speed;
-
-        player.direction = "right";
-
-    }
-
-
-    // ---------------------------------------------
-    // Diagonal movement
-    // ---------------------------------------------
-
-    if (
-        dx !== 0 &&
-        dy !== 0
-    ) {
-
-        dx *= 0.7071;
-
-        dy *= 0.7071;
-
-    }
-
-
-    // ---------------------------------------------
-    // Move
-    // ---------------------------------------------
-
-    movePlayer(
-        dx,
-        dy
-    );
-
-
-    // ---------------------------------------------
-    // Animation
-    // ---------------------------------------------
-
-    updateAnimation(
-        dx,
-        dy
-    );
-
-
-    // ---------------------------------------------
-    // Camera
-    // ---------------------------------------------
+function updateCamera() {
 
     camera.x =
-
-        player.x
-        +
-        player.width / 2
-        -
-        canvas.width / 2;
+        duck.x -
+        canvas.width / 2 +
+        duck.width / 2;
 
 
     camera.y =
+        duck.y -
+        canvas.height / 2 +
+        duck.height / 2;
 
-        player.y
-        +
-        player.height / 2
-        -
-        canvas.height / 2;
-
-
-    // ---------------------------------------------
-    // Camera boundaries
-    // ---------------------------------------------
 
     camera.x = Math.max(
-
         0,
-
         Math.min(
-
-            world.width -
+            WORLD_WIDTH -
             canvas.width,
-
             camera.x
-
         )
-
     );
 
 
     camera.y = Math.max(
-
         0,
-
         Math.min(
-
-            world.height -
+            WORLD_HEIGHT -
             canvas.height,
-
             camera.y
-
         )
-
     );
+
+}
+
+
+// =====================================================
+// DRAW GROUND
+// =====================================================
+
+function drawGround() {
+
+    ctx.fillStyle =
+        "#78a85a";
+
+    ctx.fillRect(
+        0,
+        0,
+        WORLD_WIDTH,
+        WORLD_HEIGHT
+    );
+
+}
+
+
+// =====================================================
+// DRAW ROADS
+// =====================================================
+
+function drawRoads() {
+
+    ctx.fillStyle =
+        "#55545a";
+
+
+    // Horizontal roads
+
+    ctx.fillRect(
+        0,
+        400,
+        WORLD_WIDTH,
+        150
+    );
+
+
+    ctx.fillRect(
+        0,
+        950,
+        WORLD_WIDTH,
+        150
+    );
+
+
+    ctx.fillRect(
+        0,
+        1530,
+        WORLD_WIDTH,
+        150
+    );
+
+
+    // Vertical roads
+
+    ctx.fillRect(
+        480,
+        0,
+        120,
+        WORLD_HEIGHT
+    );
+
+
+    ctx.fillRect(
+        870,
+        0,
+        120,
+        WORLD_HEIGHT
+    );
+
+
+    ctx.fillRect(
+        1360,
+        0,
+        120,
+        WORLD_HEIGHT
+    );
+
+
+    ctx.fillRect(
+        1900,
+        0,
+        120,
+        WORLD_HEIGHT
+    );
+
+
+    // Road markings
+
+    ctx.fillStyle =
+        "#d7c76a";
+
+
+    for (
+        let x = 0;
+        x < WORLD_WIDTH;
+        x += 80
+    ) {
+
+        ctx.fillRect(
+            x,
+            470,
+            40,
+            5
+        );
+
+
+        ctx.fillRect(
+            x,
+            1020,
+            40,
+            5
+        );
+
+
+        ctx.fillRect(
+            x,
+            1600,
+            40,
+            5
+        );
+
+    }
+
+
+    for (
+        let y = 0;
+        y < WORLD_HEIGHT;
+        y += 80
+    ) {
+
+        ctx.fillRect(
+            535,
+            y,
+            5,
+            40
+        );
+
+
+        ctx.fillRect(
+            925,
+            y,
+            5,
+            40
+        );
+
+
+        ctx.fillRect(
+            1415,
+            y,
+            5,
+            40
+        );
+
+
+        ctx.fillRect(
+            1955,
+            y,
+            5,
+            40
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// DRAW BUILDINGS
+// =====================================================
+
+function drawBuildings() {
+
+    buildings.forEach(
+        building => {
+
+            // Main building
+
+            ctx.fillStyle =
+                building.colour;
+
+            ctx.fillRect(
+                building.x,
+                building.y,
+                building.width,
+                building.height
+            );
+
+
+            // Roof
+
+            ctx.fillStyle =
+                "#3e3d45";
+
+            ctx.fillRect(
+                building.x - 5,
+                building.y - 10,
+                building.width + 10,
+                12
+            );
+
+
+            // Windows
+
+            ctx.fillStyle =
+                "#bde1e5";
+
+
+            const windowSpacing = 55;
+
+
+            for (
+                let x =
+                    building.x + 25;
+
+                x <
+                    building.x +
+                    building.width -
+                    25;
+
+                x += windowSpacing
+            ) {
+
+                for (
+                    let y =
+                        building.y + 35;
+
+                    y <
+                        building.y +
+                        building.height -
+                        45;
+
+                    y += 55
+                ) {
+
+                    ctx.fillRect(
+                        x,
+                        y,
+                        24,
+                        24
+                    );
+
+
+                    ctx.fillStyle =
+                        "#55545a";
+
+
+                    ctx.fillRect(
+                        x + 11,
+                        y,
+                        3,
+                        24
+                    );
+
+
+                    ctx.fillStyle =
+                        "#bde1e5";
+
+                }
+
+            }
+
+
+            // Door
+
+            ctx.fillStyle =
+                "#553f35";
+
+            ctx.fillRect(
+                building.x +
+                building.width / 2 -
+                15,
+
+                building.y +
+                building.height -
+                45,
+
+                30,
+                45
+            );
+
+
+            // Special building sign
+
+            if (
+                building.type ===
+                "cafe" ||
+                building.type ===
+                "shop"
+            ) {
+
+                ctx.fillStyle =
+                    "#fff4c4";
+
+                ctx.fillRect(
+                    building.x + 20,
+                    building.y + 12,
+                    building.width - 40,
+                    32
+                );
+
+
+                ctx.fillStyle =
+                    "#3b3434";
+
+                ctx.font =
+                    "bold 14px monospace";
+
+                ctx.textAlign =
+                    "center";
+
+                ctx.fillText(
+                    building.name,
+                    building.x +
+                    building.width / 2,
+
+                    building.y + 34
+                );
+
+                ctx.textAlign =
+                    "left";
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// DRAW TREES
+// =====================================================
+
+function drawTrees() {
+
+    trees.forEach(
+        tree => {
+
+            // Trunk
+
+            ctx.fillStyle =
+                "#79503a";
+
+            ctx.fillRect(
+                tree.x - 5,
+                tree.y,
+                10,
+                22
+            );
+
+
+            // Leaves
+
+            ctx.fillStyle =
+                "#347448";
+
+            ctx.fillRect(
+                tree.x - 18,
+                tree.y - 15,
+                36,
+                30
+            );
+
+
+            ctx.fillStyle =
+                "#3f8751";
+
+            ctx.fillRect(
+                tree.x - 12,
+                tree.y - 25,
+                24,
+                20
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// DRAW LAMPS
+// =====================================================
+
+function drawLamps() {
+
+    lamps.forEach(
+        lamp => {
+
+            ctx.fillStyle =
+                "#303035";
+
+            ctx.fillRect(
+                lamp.x,
+                lamp.y,
+                5,
+                45
+            );
+
+
+            ctx.fillStyle =
+                "#ffe994";
+
+            ctx.fillRect(
+                lamp.x - 6,
+                lamp.y - 8,
+                17,
+                12
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// DRAW CARS
+// =====================================================
+
+function drawCars() {
+
+    cars.forEach(
+        car => {
+
+            ctx.fillStyle =
+                car.colour;
+
+            ctx.fillRect(
+                car.x,
+                car.y,
+                car.width,
+                car.height
+            );
+
+
+            ctx.fillStyle =
+                "#a9d5dd";
+
+            ctx.fillRect(
+                car.x + 8,
+                car.y + 4,
+                13,
+                10
+            );
+
+
+            ctx.fillRect(
+                car.x + 27,
+                car.y + 4,
+                13,
+                10
+            );
+
+
+            ctx.fillStyle =
+                "#222";
+
+            ctx.fillRect(
+                car.x + 5,
+                car.y + 19,
+                9,
+                6
+            );
+
+
+            ctx.fillRect(
+                car.x + 34,
+                car.y + 19,
+                9,
+                6
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// DRAW DELIVERY
+// =====================================================
+
+function drawDelivery() {
+
+    const delivery =
+        deliveries[currentDelivery];
+
+
+    if (!delivery) {
+        return;
+    }
+
+
+    // Parcel marker
+
+    ctx.fillStyle =
+        "#e7b85b";
+
+    ctx.fillRect(
+        delivery.x - 12,
+        delivery.y - 12,
+        24,
+        24
+    );
+
+
+    ctx.fillStyle =
+        "#8b5b36";
+
+    ctx.fillRect(
+        delivery.x - 2,
+        delivery.y - 12,
+        4,
+        24
+    );
+
+
+    // Arrow
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.font =
+        "bold 24px monospace";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillText(
+        "!",
+        delivery.x,
+        delivery.y - 25
+    );
+
+    ctx.textAlign =
+        "left";
 
 }
 
@@ -651,53 +1483,37 @@ function update() {
 
 function drawDuck() {
 
-    const animation =
-        duckAnimations[
-            player.animation
-        ];
+    if (
+        !duckSprite.complete
+    ) {
+        return;
+    }
+
+
+    const row =
+        duck.moving
+            ? WALK_ROW
+            : IDLE_ROW;
 
 
     ctx.drawImage(
 
         duckSprite,
 
-        // Source X
+        duck.frame *
+        FRAME_WIDTH,
 
-        player.animationFrame *
-        DUCK_FRAME_WIDTH,
+        row *
+        FRAME_HEIGHT,
 
-        // Source Y
+        FRAME_WIDTH,
+        FRAME_HEIGHT,
 
-        animation.row *
-        DUCK_FRAME_HEIGHT,
+        duck.x,
+        duck.y,
 
-        // Source width
-
-        DUCK_FRAME_WIDTH,
-
-        // Source height
-
-        DUCK_FRAME_HEIGHT,
-
-        // Screen X
-
-        Math.floor(
-            player.x
-        ),
-
-        // Screen Y
-
-        Math.floor(
-            player.y
-        ),
-
-        // Screen width
-
-        DUCK_FRAME_WIDTH,
-
-        // Screen height
-
-        DUCK_FRAME_HEIGHT
+        duck.width,
+        duck.height
 
     );
 
@@ -705,319 +1521,353 @@ function drawDuck() {
 
 
 // =====================================================
-// DRAW TREE
+// DRAW HUD
 // =====================================================
 
-function drawTree(x, y) {
-
-    // Trunk
+function drawHUD() {
 
     ctx.fillStyle =
-        "#69472f";
+        "rgba(30,30,35,0.85)";
 
     ctx.fillRect(
-
-        x + 9,
-        y + 13,
-
-        7,
-        14
-
+        15,
+        15,
+        280,
+        75
     );
 
 
-    // Leaves
-
     ctx.fillStyle =
-        "#356b3d";
+        "#ffffff";
 
-    ctx.fillRect(
+    ctx.font =
+        "16px monospace";
 
-        x + 3,
-        y + 5,
-
-        19,
-        15
-
+    ctx.fillText(
+        "DELIVERY DUCK",
+        30,
+        40
     );
 
-    ctx.fillRect(
 
-        x + 7,
-        y,
+    const delivery =
+        deliveries[currentDelivery];
 
-        11,
-        22
 
+    if (delivery) {
+
+        ctx.fillText(
+            "Deliver to: " +
+            delivery.name,
+
+            30,
+            65
+        );
+
+    } else {
+
+        ctx.fillText(
+            "All deliveries complete!",
+            30,
+            65
+        );
+
+    }
+
+
+    ctx.fillText(
+        "Coins: " + coins,
+        30,
+        85
     );
 
 }
 
 
 // =====================================================
-// DRAW WORLD
+// DRAW DIALOGUE
 // =====================================================
 
-function draw() {
+function drawDialogue() {
 
-    ctx.clearRect(
+    if (!dialogueOpen) {
+        return;
+    }
 
-        0,
-        0,
-
-        canvas.width,
-        canvas.height
-
-    );
-
-
-    ctx.save();
-
-
-    // Camera
-
-    ctx.translate(
-
-        -Math.floor(
-            camera.x
-        ),
-
-        -Math.floor(
-            camera.y
-        )
-
-    );
-
-
-    // ---------------------------------------------
-    // GRASS
-    // ---------------------------------------------
 
     ctx.fillStyle =
-        "#72a653";
+        "rgba(25,25,30,0.95)";
 
     ctx.fillRect(
-
-        0,
-        0,
-
-        world.width,
-        world.height
-
+        30,
+        canvas.height - 180,
+        canvas.width - 60,
+        140
     );
 
 
-    // ---------------------------------------------
-    // ROADS
-    // ---------------------------------------------
+    ctx.strokeStyle =
+        "#ffffff";
+
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        30,
+        canvas.height - 180,
+        canvas.width - 60,
+        140
+    );
+
 
     ctx.fillStyle =
-        "#4e4b4a";
+        "#ffe05b";
 
+    ctx.font =
+        "bold 20px monospace";
 
-    // Horizontal
-
-    ctx.fillRect(
-
-        0,
-        250,
-
-        world.width,
-        80
-
+    ctx.fillText(
+        dialogueName,
+        55,
+        canvas.height - 140
     );
 
-
-    // Vertical
-
-    ctx.fillRect(
-
-        600,
-        0,
-
-        80,
-        world.height
-
-    );
-
-
-    // ---------------------------------------------
-    // ROAD MARKINGS
-    // ---------------------------------------------
 
     ctx.fillStyle =
-        "#d9c85c";
+        "#ffffff";
+
+    ctx.font =
+        "16px monospace";
 
 
-    for (
+    // Simple dialogue wrapping
 
-        let x = 0;
+    const words =
+        dialogueText.split(" ");
 
-        x < world.width;
+    let line = "";
 
-        x += 40
+    let lineY =
+        canvas.height - 105;
 
-    ) {
 
-        ctx.fillRect(
+    words.forEach(
+        word => {
 
-            x,
-            288,
+            const test =
+                line +
+                word +
+                " ";
 
-            20,
-            3
+            if (
+                ctx.measureText(
+                    test
+                ).width >
+                canvas.width - 120
+            ) {
 
-        );
+                ctx.fillText(
+                    line,
+                    55,
+                    lineY
+                );
+
+                line =
+                    word +
+                    " ";
+
+                lineY += 24;
+
+            } else {
+
+                line = test;
+
+            }
+
+        }
+    );
+
+
+    ctx.fillText(
+        line,
+        55,
+        lineY
+    );
+
+
+    ctx.font =
+        "12px monospace";
+
+    ctx.fillText(
+        "Press E to continue",
+        canvas.width - 190,
+        canvas.height - 55
+    );
+
+}
+
+
+// =====================================================
+// INTERACTION
+// =====================================================
+
+function interact() {
+
+    // Close dialogue
+
+    if (dialogueOpen) {
+
+        dialogueOpen = false;
+
+        return;
 
     }
 
 
-    for (
-
-        let y = 0;
-
-        y < world.height;
-
-        y += 40
-
-    ) {
-
-        ctx.fillRect(
-
-            638,
-            y,
-
-            3,
-            20
-
-        );
-
-    }
-
-
-    // ---------------------------------------------
-    // BUILDINGS
-    // ---------------------------------------------
+    // Check shops and cafes
 
     for (
-        const wall of walls
+        const building of buildings
     ) {
-
-        // Tree
 
         if (
-
-            wall.width === 25 &&
-            wall.height === 25
-
+            building.type !==
+                "cafe" &&
+            building.type !==
+                "shop"
         ) {
-
-            drawTree(
-
-                wall.x,
-                wall.y
-
-            );
 
             continue;
 
         }
 
 
-        // Shadow
-
-        ctx.fillStyle =
-            "#493c38";
-
-        ctx.fillRect(
-
-            wall.x + 4,
-            wall.y + 4,
-
-            wall.width,
-            wall.height
-
-        );
+        const buildingCentreX =
+            building.x +
+            building.width / 2;
 
 
-        // Building
-
-        ctx.fillStyle =
-            "#b87559";
-
-        ctx.fillRect(
-
-            wall.x,
-            wall.y,
-
-            wall.width,
-            wall.height
-
-        );
+        const buildingCentreY =
+            building.y +
+            building.height / 2;
 
 
-        // Windows
-
-        ctx.fillStyle =
-            "#79a9b7";
-
-
-        for (
-
-            let wx =
-                wall.x + 15;
-
-            wx <
-                wall.x +
-                wall.width -
-                15;
-
-            wx += 35
-
+        if (
+            distance(
+                duck.x,
+                duck.y,
+                buildingCentreX,
+                buildingCentreY
+            ) < 180
         ) {
 
-            for (
+            dialogueName =
+                building.name;
 
-                let wy =
-                    wall.y + 15;
 
-                wy <
-                    wall.y +
-                    wall.height -
-                    15;
+            dialogueText =
+                building.dialogue[
+                    Math.floor(
+                        Math.random() *
+                        building.dialogue.length
+                    )
+                ];
 
-                wy += 30
 
-            ) {
+            dialogueOpen = true;
 
-                ctx.fillRect(
-
-                    wx,
-                    wy,
-
-                    12,
-                    10
-
-                );
-
-            }
+            return;
 
         }
 
     }
 
 
-    // ---------------------------------------------
-    // DUCK
-    // ---------------------------------------------
+    // Check delivery
+
+    const delivery =
+        deliveries[currentDelivery];
+
 
     if (
-        duckSprite.complete
+        delivery &&
+        distance(
+            duck.x,
+            duck.y,
+            delivery.x,
+            delivery.y
+        ) < 70
     ) {
 
-        drawDuck();
+        coins += 10;
+
+        currentDelivery++;
+
+        dialogueName =
+            "Delivery complete!";
+
+
+        dialogueText =
+            "Nice work! You earned 10 coins.";
+
+
+        dialogueOpen = true;
 
     }
+
+}
+
+
+// =====================================================
+// INTERACTION KEY
+// =====================================================
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key.toLowerCase() ===
+            "e"
+        ) {
+
+            interact();
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// DRAW WORLD
+// =====================================================
+
+function drawWorld() {
+
+    ctx.save();
+
+
+    ctx.translate(
+        -camera.x,
+        -camera.y
+    );
+
+
+    drawGround();
+
+    drawRoads();
+
+    drawBuildings();
+
+    drawTrees();
+
+    drawLamps();
+
+    drawCars();
+
+    drawDelivery();
+
+    drawDuck();
 
 
     ctx.restore();
@@ -1031,9 +1881,27 @@ function draw() {
 
 function gameLoop() {
 
-    update();
+    moveDuck();
 
-    draw();
+    updateAnimation();
+
+    updateCamera();
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    drawWorld();
+
+    drawHUD();
+
+    drawDialogue();
+
 
     requestAnimationFrame(
         gameLoop
@@ -1042,4 +1910,12 @@ function gameLoop() {
 }
 
 
-gameLoop();
+// =====================================================
+// START
+// =====================================================
+
+duckSprite.onload = () => {
+
+    gameLoop();
+
+};
