@@ -33,45 +33,17 @@ const duck =
 // DUCK SPRITESHEET
 // =====================================================
 
-/*
-    Sprite sheet:
-
-    192 × 128
-
-    Each sprite:
-
-    32 × 32
-
-    Layout:
-
-    Row 0:
-    2 idle frames
-
-    Row 1:
-    6 walk frames
-
-    Row 2:
-    4 bouncy idle frames
-
-    Row 3:
-    6 bouncy walk frames
-*/
-
-
 const FRAME_WIDTH = 32;
 const FRAME_HEIGHT = 32;
 
 
 // =====================================================
-// TITLE DUCK
+// IDLE ANIMATION
 // =====================================================
 
 let duckFrame = 0;
 
 let duckTimer = 0;
-
-
-// We use the first idle row.
 
 const idleFrames = 2;
 
@@ -91,6 +63,7 @@ function animateDuck() {
 
         duckFrame++;
 
+
         if (
             duckFrame >= idleFrames
         ) {
@@ -102,14 +75,8 @@ function animateDuck() {
     }
 
 
-    /*
-        Move the spritesheet so that
-        only one 32x32 frame is
-        visible.
-    */
-
     duck.style.objectPosition =
-        `${duckFrame * 32}px 0px`;
+        `${duckFrame * FRAME_WIDTH}px 0px`;
 
 
     requestAnimationFrame(
@@ -130,17 +97,8 @@ playButton.addEventListener(
     "click",
     () => {
 
-        /*
-            index.html is one folder
-            above the title screen.
-
-            So:
-
-            ../index.html
-        */
-
         window.location.href =
-            "../index.html";
+            "../game.html";
 
     }
 );
@@ -179,7 +137,7 @@ closeCreditsButton.addEventListener(
 
 
 // =====================================================
-// CLOSE CREDITS WITH ESCAPE
+// ESCAPE
 // =====================================================
 
 document.addEventListener(
