@@ -20,7 +20,6 @@ const duckSprite = new Image();
 
 duckSprite.src = "ducky_3_spritesheet.png";
 
-
 const DUCK_FRAME_WIDTH = 32;
 const DUCK_FRAME_HEIGHT = 32;
 
@@ -83,7 +82,9 @@ const player = {
 
         width: 14,
         height: 12
+
     }
+
 };
 
 
@@ -117,9 +118,7 @@ const world = {
 
 const walls = [
 
-    // ---------------------------------------------
-    // BUILDING 1
-    // ---------------------------------------------
+    // Building
 
     {
         x: 80,
@@ -130,9 +129,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // BUILDING 2
-    // ---------------------------------------------
+    // Building
 
     {
         x: 430,
@@ -143,9 +140,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // BUILDING 3
-    // ---------------------------------------------
+    // Building
 
     {
         x: 720,
@@ -156,9 +151,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // BUILDING 4
-    // ---------------------------------------------
+    // Building
 
     {
         x: 280,
@@ -169,9 +162,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // BUILDING 5
-    // ---------------------------------------------
+    // Building
 
     {
         x: 700,
@@ -182,9 +173,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // TREE 1
-    // ---------------------------------------------
+    // Tree
 
     {
         x: 1050,
@@ -195,9 +184,7 @@ const walls = [
     },
 
 
-    // ---------------------------------------------
-    // TREE 2
-    // ---------------------------------------------
+    // Tree
 
     {
         x: 1100,
@@ -215,7 +202,6 @@ const walls = [
 // =====================================================
 
 const keys = {};
-
 
 window.addEventListener("keydown", (event) => {
 
@@ -259,7 +245,7 @@ function getPlayerHitbox() {
 
 
 // =====================================================
-// COLLISION CHECK
+// COLLISION
 // =====================================================
 
 function isColliding(a, b) {
@@ -290,13 +276,13 @@ function isColliding(a, b) {
 
 
 // =====================================================
-// MOVE PLAYER
+// PLAYER MOVEMENT
 // =====================================================
 
 function movePlayer(dx, dy) {
 
     // ---------------------------------------------
-    // HORIZONTAL
+    // Horizontal movement
     // ---------------------------------------------
 
     player.x += dx;
@@ -325,8 +311,7 @@ function movePlayer(dx, dy) {
 
             }
 
-
-            if (dx < 0) {
+            else if (dx < 0) {
 
                 player.x =
                     wall.x
@@ -337,7 +322,6 @@ function movePlayer(dx, dy) {
 
             }
 
-
             hitbox =
                 getPlayerHitbox();
 
@@ -347,7 +331,7 @@ function movePlayer(dx, dy) {
 
 
     // ---------------------------------------------
-    // VERTICAL
+    // Vertical movement
     // ---------------------------------------------
 
     player.y += dy;
@@ -376,8 +360,7 @@ function movePlayer(dx, dy) {
 
             }
 
-
-            if (dy < 0) {
+            else if (dy < 0) {
 
                 player.y =
                     wall.y
@@ -388,7 +371,6 @@ function movePlayer(dx, dy) {
 
             }
 
-
             hitbox =
                 getPlayerHitbox();
 
@@ -398,7 +380,7 @@ function movePlayer(dx, dy) {
 
 
     // ---------------------------------------------
-    // WORLD BOUNDS
+    // World boundaries
     // ---------------------------------------------
 
     player.x = Math.max(
@@ -436,7 +418,7 @@ function movePlayer(dx, dy) {
 
 
 // =====================================================
-// UPDATE ANIMATION
+// ANIMATION
 // =====================================================
 
 function updateAnimation(dx, dy) {
@@ -471,24 +453,13 @@ function updateAnimation(dx, dy) {
     }
 
 
-    // Don't animate while standing
-
-    if (!moving) {
-
-        player.animationFrame = 0;
-
-        player.animationTimer = 0;
-
-        return;
-
-    }
-
+    // Animate idle AND walking
 
     player.animationTimer++;
 
 
     if (
-        player.animationTimer >= 8
+        player.animationTimer >= 12
     ) {
 
         player.animationTimer = 0;
@@ -517,7 +488,7 @@ function updateAnimation(dx, dy) {
 
 
 // =====================================================
-// UPDATE GAME
+// UPDATE
 // =====================================================
 
 function update() {
@@ -527,7 +498,7 @@ function update() {
 
 
     // ---------------------------------------------
-    // INPUT
+    // WASD
     // ---------------------------------------------
 
     if (
@@ -579,7 +550,7 @@ function update() {
 
 
     // ---------------------------------------------
-    // NORMALISE DIAGONAL MOVEMENT
+    // Diagonal movement
     // ---------------------------------------------
 
     if (
@@ -588,13 +559,14 @@ function update() {
     ) {
 
         dx *= 0.7071;
+
         dy *= 0.7071;
 
     }
 
 
     // ---------------------------------------------
-    // MOVE
+    // Move
     // ---------------------------------------------
 
     movePlayer(
@@ -604,7 +576,7 @@ function update() {
 
 
     // ---------------------------------------------
-    // ANIMATION
+    // Animation
     // ---------------------------------------------
 
     updateAnimation(
@@ -614,7 +586,7 @@ function update() {
 
 
     // ---------------------------------------------
-    // CAMERA
+    // Camera
     // ---------------------------------------------
 
     camera.x =
@@ -636,7 +608,7 @@ function update() {
 
 
     // ---------------------------------------------
-    // CAMERA BOUNDS
+    // Camera boundaries
     // ---------------------------------------------
 
     camera.x = Math.max(
@@ -689,30 +661,42 @@ function drawDuck() {
 
         duckSprite,
 
-        // SOURCE X
+        // Source X
+
         player.animationFrame *
         DUCK_FRAME_WIDTH,
 
-        // SOURCE Y
+        // Source Y
+
         animation.row *
         DUCK_FRAME_HEIGHT,
 
-        // SOURCE WIDTH
+        // Source width
+
         DUCK_FRAME_WIDTH,
 
-        // SOURCE HEIGHT
+        // Source height
+
         DUCK_FRAME_HEIGHT,
 
-        // DESTINATION X
-        Math.floor(player.x),
+        // Screen X
 
-        // DESTINATION Y
-        Math.floor(player.y),
+        Math.floor(
+            player.x
+        ),
 
-        // DESTINATION WIDTH
+        // Screen Y
+
+        Math.floor(
+            player.y
+        ),
+
+        // Screen width
+
         DUCK_FRAME_WIDTH,
 
-        // DESTINATION HEIGHT
+        // Screen height
+
         DUCK_FRAME_HEIGHT
 
     );
@@ -728,7 +712,8 @@ function drawTree(x, y) {
 
     // Trunk
 
-    ctx.fillStyle = "#69472f";
+    ctx.fillStyle =
+        "#69472f";
 
     ctx.fillRect(
 
@@ -743,7 +728,8 @@ function drawTree(x, y) {
 
     // Leaves
 
-    ctx.fillStyle = "#356b3d";
+    ctx.fillStyle =
+        "#356b3d";
 
     ctx.fillRect(
 
@@ -754,7 +740,6 @@ function drawTree(x, y) {
         15
 
     );
-
 
     ctx.fillRect(
 
@@ -793,9 +778,13 @@ function draw() {
 
     ctx.translate(
 
-        -Math.floor(camera.x),
+        -Math.floor(
+            camera.x
+        ),
 
-        -Math.floor(camera.y)
+        -Math.floor(
+            camera.y
+        )
 
     );
 
@@ -806,7 +795,6 @@ function draw() {
 
     ctx.fillStyle =
         "#72a653";
-
 
     ctx.fillRect(
 
@@ -820,12 +808,14 @@ function draw() {
 
 
     // ---------------------------------------------
-    // HORIZONTAL ROAD
+    // ROADS
     // ---------------------------------------------
 
     ctx.fillStyle =
         "#4e4b4a";
 
+
+    // Horizontal
 
     ctx.fillRect(
 
@@ -838,9 +828,7 @@ function draw() {
     );
 
 
-    // ---------------------------------------------
-    // VERTICAL ROAD
-    // ---------------------------------------------
+    // Vertical
 
     ctx.fillRect(
 
@@ -862,9 +850,13 @@ function draw() {
 
 
     for (
+
         let x = 0;
+
         x < world.width;
+
         x += 40
+
     ) {
 
         ctx.fillRect(
@@ -881,9 +873,13 @@ function draw() {
 
 
     for (
+
         let y = 0;
+
         y < world.height;
+
         y += 40
+
     ) {
 
         ctx.fillRect(
@@ -907,11 +903,13 @@ function draw() {
         const wall of walls
     ) {
 
-        // Trees
+        // Tree
 
         if (
+
             wall.width === 25 &&
             wall.height === 25
+
         ) {
 
             drawTree(
@@ -926,11 +924,10 @@ function draw() {
         }
 
 
-        // Building shadow
+        // Shadow
 
         ctx.fillStyle =
             "#493c38";
-
 
         ctx.fillRect(
 
@@ -947,7 +944,6 @@ function draw() {
 
         ctx.fillStyle =
             "#b87559";
-
 
         ctx.fillRect(
 
